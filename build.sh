@@ -1,1 +1,1 @@
-docker build -f ./Dockerfile -t fuzhengwei/chatgpt-api .
+docker build -f ./Dockerfile -t fuzhengwei/chatgpt-api:1.5 .
