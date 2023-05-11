@@ -24,7 +24,7 @@ public class ApiAccessController {
 
     /**
      * 1. 本地访问；http://localhost:8080/authorize?username=xfg&password=123
-     * 2. 云服务访问；http://207.246.123.150:8080/authorize?username=xfg&password=123
+     * 2. 云服务访问；http://api.xfg.im:8080/authorize?username=xfg&password=123
      * 3. 内网穿透；在docs/natapp/natapp执行；通过获得的地址访问服务  http://xfg.nat300.top/authorize?username=xfg&password=123
      */
     @RequestMapping("/authorize")
