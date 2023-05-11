@@ -44,7 +44,7 @@ public class ApiTest {
     /**
      * 这是一个简单的测试，后续会开发 ChatGPT API
      * 测试时候，需要先获得授权token
-     * 获取方式；http://207.246.123.150:8080/authorize?username=xfg&password=123 - 此地址暂时有效，后续根据课程首页说明获取token；https://t.zsxq.com/0d3o5FKvc
+     * 获取方式；http://api.xfg.im:8080/authorize?username=xfg&password=123 - 此地址暂时有效，后续根据课程首页说明获取token；https://t.zsxq.com/0d3o5FKvc
      */
     @Test
     public void test_chatGPT() throws IOException {

@@ -1,4 +1,4 @@
-docker run -p 80:80 \
+docker run -p 8080:8080 \
 --name chatgpt-api \
 -e PARAMS="
     --sever.port=80
