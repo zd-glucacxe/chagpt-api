@@ -1,17 +1,17 @@
 package cn.bugstack.chatgpt.interfaces;
 
+import cn.bugstack.chatglm.model.ChatCompletionRequest;
+import cn.bugstack.chatglm.model.Model;
+import cn.bugstack.chatglm.model.Role;
+import cn.bugstack.chatglm.session.Configuration;
+import cn.bugstack.chatglm.session.OpenAiSession;
+import cn.bugstack.chatglm.session.OpenAiSessionFactory;
+import cn.bugstack.chatglm.session.defaults.DefaultOpenAiSessionFactory;
 import cn.bugstack.chatgpt.application.IWeiXinValidateService;
-import cn.bugstack.chatgpt.common.Constants;
-import cn.bugstack.chatgpt.domain.chat.ChatCompletionRequest;
-import cn.bugstack.chatgpt.domain.chat.ChatCompletionResponse;
-import cn.bugstack.chatgpt.domain.chat.Message;
-import cn.bugstack.chatgpt.domain.receive.model.BehaviorMatter;
+
 import cn.bugstack.chatgpt.domain.receive.model.MessageTextEntity;
 import cn.bugstack.chatgpt.infrastructure.util.XmlUtil;
-import cn.bugstack.chatgpt.session.Configuration;
-import cn.bugstack.chatgpt.session.OpenAiSession;
-import cn.bugstack.chatgpt.session.OpenAiSessionFactory;
-import cn.bugstack.chatgpt.session.defaults.DefaultOpenAiSessionFactory;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +20,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author 小傅哥，微信：fustack
@@ -52,11 +51,10 @@ public class WeiXinPortalController {
     private Map<String, String> chatGPTMap = new ConcurrentHashMap<>();
 
     public WeiXinPortalController() {
-        // 1. 配置文件
+        // 1. 配置文件；智谱Ai申请你的 ApiSecretKey 教程；https://bugstack.cn/md/project/chatgpt/sdk/chatglm-sdk-java.html
         Configuration configuration = new Configuration();
-        configuration.setApiHost("https://api.xfg.im/b8b6/");
-        configuration.setApiKey("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");
-        configuration.setAuthToken("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4ZmciLCJleHAiOjE2ODM0MTgwOTYsImlhdCI6MTY4MzQxNDQ5NiwianRpIjoiODIyM2FhZWQtOWJiNS00NjE0LTljNGYtNjNiMTBkYWE1YjA3IiwidXNlcm5hbWUiOiJ4ZmcifQ.5rsy5bOOJl1UG5e4IzSDU7YbUUZ4d_ZXHz2wbk1ne58");
+        configuration.setApiHost("https://open.bigmodel.cn/");
+        configuration.setApiSecretKey("d570f7c5d289cdac2abdfdc562e39f3f.trqz1dH8ZK6ED7Pg");
         // 2. 会话工厂
         OpenAiSessionFactory factory = new DefaultOpenAiSessionFactory(configuration);
         // 3. 开启会话
@@ -66,7 +64,7 @@ public class WeiXinPortalController {
 
     /**
      * 处理微信服务器发来的get请求，进行签名的验证
-     * http://xfg.nat300.top/wx/portal/wx470537fb2f5bf897
+     * http://xfg-studio.natapp1.cc/wx/portal/wx4bd388e42758df34
      * <p>
      * appid     微信端AppID
      * signature 微信端发来的签名
@@ -148,22 +146,27 @@ public class WeiXinPortalController {
     public void doChatGPTTask(String content) {
         chatGPTMap.put(content, "NULL");
         taskExecutor.execute(() -> {
-            // OpenAI 请求
-            // 1. 创建参数
-            ChatCompletionRequest chatCompletion = ChatCompletionRequest
-                    .builder()
-                    .messages(Collections.singletonList(Message.builder().role(Constants.Role.USER).content(content).build()))
-                    .model(ChatCompletionRequest.Model.GPT_3_5_TURBO.getCode())
-                    .build();
-            // 2. 发起请求
-            ChatCompletionResponse chatCompletionResponse = openAiSession.completions(chatCompletion);
-            // 3. 解析结果
-            StringBuilder messages = new StringBuilder();
-            chatCompletionResponse.getChoices().forEach(e -> {
-                messages.append(e.getMessage().getContent());
-            });
+            // 入参；模型、请求信息；记得更新最新版 ChatGLM-SDK-Java
+            ChatCompletionRequest request = new ChatCompletionRequest();
+            request.setModel(Model.CHATGLM_TURBO); // chatGLM_6b_SSE、chatglm_lite、chatglm_lite_32k、chatglm_std、chatglm_pro
+            request.setPrompt(new ArrayList<ChatCompletionRequest.Prompt>() {
+                private static final long serialVersionUID = -7988151926241837899L;
 
-            chatGPTMap.put(content, messages.toString());
+                {
+                    add(ChatCompletionRequest.Prompt.builder()
+                            .role(Role.user.getCode())
+                            .content(content)
+                            .build());
+                }
+            });
+            // 同步获取结果
+            try {
+                CompletableFuture<String> future = openAiSession.completions(request);
+                chatGPTMap.put(content, future.get());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
         });
     }
 

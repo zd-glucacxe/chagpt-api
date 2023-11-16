@@ -103,9 +103,14 @@
             <artifactId>xstream</artifactId>
             <version>1.4.10</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>cn.bugstack.chatgpt</groupId>-->
+<!--            <artifactId>chatgpt-sdk-java</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>cn.bugstack.chatgpt</groupId>
-            <artifactId>chatgpt-sdk-java</artifactId>
+            <groupId>cn.bugstack</groupId>
+            <artifactId>chatglm-sdk-java</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

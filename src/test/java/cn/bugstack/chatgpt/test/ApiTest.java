@@ -50,7 +50,7 @@ public class ApiTest {
     public void test_chatGPT() throws IOException {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
         // 用获取的 token 替换，默认有效期60分钟。地址非长期有效，只做学习验证。
-        HttpPost post = new HttpPost("https://api.xfg.im/b8b6/v1/completions?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4ZmciLCJleHAiOjE2ODM0MjgyMjgsImlhdCI6MTY4MzQyNDYyOCwianRpIjoiMzI4MTlhZTYtNDhkYy00NzM3LWFkMjEtMjgyOWVhYTkyM2VhIiwidXNlcm5hbWUiOiJ4ZmcifQ.YBG1FC5qp87UQW-DChCvZu7YGsHar40ZI1s3Qn29XoA");
+        HttpPost post = new HttpPost("https://api.xfg.im/b8b6/v1/completions?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4ZmciLCJleHAiOjE2ODM4NDY5MzUsImlhdCI6MTY4Mzg0MzMzNSwianRpIjoiNWU0MjQ5NWUtOGEyYS00MTY1LTg3NjctODBhODJjYjE1YWFlIiwidXNlcm5hbWUiOiJ4ZmcifQ.cj7vV-o-d2avOC_XP3Dwvu-U6mSmYefOnXQK1oaKYj4");
 
         post.addHeader("Content-Type", "application/json");
         post.addHeader("Authorization", "Bearer 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");
