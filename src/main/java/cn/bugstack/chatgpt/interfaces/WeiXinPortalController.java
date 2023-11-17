@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 
 /**
  * @author 小傅哥，微信：fustack
@@ -35,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 @RequestMapping("/wx/portal/{appid}")
 public class WeiXinPortalController {
 
-    private Logger logger = LoggerFactory.getLogger(WeiXinPortalController.class);
+    private final Logger logger = LoggerFactory.getLogger(WeiXinPortalController.class);
 
     @Value("${wx.config.originalid:gh_95b2229b90fb}")
     private String originalId;
@@ -43,12 +41,15 @@ public class WeiXinPortalController {
     @Resource
     private IWeiXinValidateService weiXinValidateService;
 
-    private OpenAiSession openAiSession;
+    private final OpenAiSession openAiSession;
 
     @Resource
     private ThreadPoolTaskExecutor taskExecutor;
 
-    private Map<String, String> chatGPTMap = new ConcurrentHashMap<>();
+    // 存放OpenAi返回结果数据
+    private final Map<String, String> openAiDataMap = new ConcurrentHashMap<>();
+    // 存放OpenAi调用次数数据
+    private final Map<String, Integer> openAiRetryCountMap = new ConcurrentHashMap<>();
 
     public WeiXinPortalController() {
         // 1. 配置文件；智谱Ai申请你的 ApiSecretKey 教程；https://bugstack.cn/md/project/chatgpt/sdk/chatglm-sdk-java.html
@@ -110,18 +111,44 @@ public class WeiXinPortalController {
         try {
             logger.info("接收微信公众号信息请求{}开始 {}", openid, requestBody);
             MessageTextEntity message = XmlUtil.xmlToBean(requestBody, MessageTextEntity.class);
-            // 异步任务
-            if (chatGPTMap.get(message.getContent().trim()) == null || "NULL".equals(chatGPTMap.get(message.getContent().trim()))) {
+            logger.info("请求次数：{}", null == openAiRetryCountMap.get(message.getContent().trim()) ? 1 : openAiRetryCountMap.get(message.getContent().trim()));
+
+            // 异步任务【加入超时重试，对于小体量的调用反馈，可以在重试有效次数内返回结果】
+            if (openAiDataMap.get(message.getContent().trim()) == null || "NULL".equals(openAiDataMap.get(message.getContent().trim()))) {
+                String data = "消息处理中，请再回复我一句【" + message.getContent().trim() + "】";
+                // 休眠等待
+                Integer retryCount = openAiRetryCountMap.get(message.getContent().trim());
+                if (null == retryCount) {
+                    if (openAiDataMap.get(message.getContent().trim()) == null) {
+                        doChatGPTTask(message.getContent().trim());
+                    }
+                    logger.info("超时重试：{}", 1);
+                    openAiRetryCountMap.put(message.getContent().trim(), 1);
+                    TimeUnit.SECONDS.sleep(5);
+                    new CountDownLatch(1).await();
+                } else if (retryCount < 2) {
+                    retryCount = retryCount + 1;
+                    logger.info("超时重试：{}", retryCount);
+                    openAiRetryCountMap.put(message.getContent().trim(), retryCount);
+                    TimeUnit.SECONDS.sleep(5);
+                    new CountDownLatch(1).await();
+                } else {
+                    retryCount = retryCount + 1;
+                    logger.info("超时重试：{}", retryCount);
+                    openAiRetryCountMap.put(message.getContent().trim(), retryCount);
+                    TimeUnit.SECONDS.sleep(3);
+                    if (openAiDataMap.get(message.getContent().trim()) != null && !"NULL".equals(openAiDataMap.get(message.getContent().trim()))) {
+                        data = openAiDataMap.get(message.getContent().trim());
+                    }
+                }
+
                 // 反馈信息[文本]
                 MessageTextEntity res = new MessageTextEntity();
                 res.setToUserName(openid);
                 res.setFromUserName(originalId);
                 res.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000L));
                 res.setMsgType("text");
-                res.setContent("消息处理中，请再回复我一句【" + message.getContent().trim() + "】");
-                if (chatGPTMap.get(message.getContent().trim()) == null) {
-                    doChatGPTTask(message.getContent().trim());
-                }
+                res.setContent(data);
 
                 return XmlUtil.beanToXml(res);
             }
@@ -132,10 +159,10 @@ public class WeiXinPortalController {
             res.setFromUserName(originalId);
             res.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000L));
             res.setMsgType("text");
-            res.setContent(chatGPTMap.get(message.getContent().trim()));
+            res.setContent(openAiDataMap.get(message.getContent().trim()));
             String result = XmlUtil.beanToXml(res);
             logger.info("接收微信公众号信息请求{}完成 {}", openid, result);
-            chatGPTMap.remove(message.getContent().trim());
+            openAiDataMap.remove(message.getContent().trim());
             return result;
         } catch (Exception e) {
             logger.error("接收微信公众号信息请求{}失败 {}", openid, requestBody, e);
@@ -144,11 +171,11 @@ public class WeiXinPortalController {
     }
 
     public void doChatGPTTask(String content) {
-        chatGPTMap.put(content, "NULL");
+        openAiDataMap.put(content, "NULL");
         taskExecutor.execute(() -> {
             // 入参；模型、请求信息；记得更新最新版 ChatGLM-SDK-Java
             ChatCompletionRequest request = new ChatCompletionRequest();
-            request.setModel(Model.CHATGLM_TURBO); // chatGLM_6b_SSE、chatglm_lite、chatglm_lite_32k、chatglm_std、chatglm_pro
+            request.setModel(Model.CHATGLM_LITE); // chatGLM_6b_SSE、chatglm_lite、chatglm_lite_32k、chatglm_std、chatglm_pro
             request.setPrompt(new ArrayList<ChatCompletionRequest.Prompt>() {
                 private static final long serialVersionUID = -7988151926241837899L;
 
@@ -162,7 +189,7 @@ public class WeiXinPortalController {
             // 同步获取结果
             try {
                 CompletableFuture<String> future = openAiSession.completions(request);
-                chatGPTMap.put(content, future.get());
+                openAiDataMap.put(content, future.get());
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
