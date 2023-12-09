@@ -16,28 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
  */
 
 @SpringBootApplication
-@RestController
 public class Application {
-
-    private Logger logger = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-    }
-
-    @GetMapping("/verify")
-    public ResponseEntity<String> verify(@RequestParam String token) {
-        logger.info("验证 token：{}", token);
-        if ("success".equals(token)){
-            return ResponseEntity.status(HttpStatus.OK).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    @GetMapping("/success")
-    public String success(){
-        return "test success by Davinci";
     }
 
 }
