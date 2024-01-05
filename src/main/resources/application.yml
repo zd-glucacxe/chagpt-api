@@ -1,12 +1,23 @@
 server:
   port: 8080
 
+chatglm:
+  sdk:
+    config:
+      # 状态；true = 开启、false 关闭
+      enabled: false
+      # 官网地址
+      api-host: https://open.bigmodel.cn/
+      # 官网申请 智谱AI开放平台
+      api-secret-key: c90489d21e981aad79a59c95b7216798.zgWk6RqzxY2bWrBb
 # 微信公众号配置信息
 # originalid：原始ID
 # appid：个人AppID
 # token：开通接口服务自定义设置
 wx:
   config:
-    originalid: gh_3f52c98dc
-    appid: wx4bd388e42758
+    originalid: gh_d4738b9c486a
+    appid: wx3dc0e78630953098
     token: b8b6
+
+

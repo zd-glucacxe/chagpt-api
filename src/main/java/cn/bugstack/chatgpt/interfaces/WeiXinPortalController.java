@@ -55,7 +55,8 @@ public class WeiXinPortalController {
         // 1. 配置文件；智谱Ai申请你的 ApiSecretKey 教程；https://bugstack.cn/md/project/chatgpt/sdk/chatglm-sdk-java.html
         Configuration configuration = new Configuration();
         configuration.setApiHost("https://open.bigmodel.cn/");
-        configuration.setApiSecretKey("d570f7c5d289cdac2abdfdc562e39f3f.trqz1dH8ZK6ED7Pg");
+        configuration.setApiSecretKey("c90489d21e981aad79a59c95b7216798.zgWk6RqzxY2bWrBb");
+//     eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4ZmciLCJleHAiOjE3MDQ0NDMwNDIsImlhdCI6MTcwNDQzOTQ0MiwianRpIjoiNTEwMzliODgtYjk4OS00MGI5LWFhMTctMDZlMTZlMDkzZTBlIiwidXNlcm5hbWUiOiJ4ZmcifQ.W7HGbGXyEJNfhLQJzpIrqm_2Rbl9ZA_1NH8XznMmLko
         // 2. 会话工厂
         OpenAiSessionFactory factory = new DefaultOpenAiSessionFactory(configuration);
         // 3. 开启会话
@@ -65,7 +66,7 @@ public class WeiXinPortalController {
 
     /**
      * 处理微信服务器发来的get请求，进行签名的验证
-     * http://xfg-studio.natapp1.cc/wx/portal/wx4bd388e42758df34
+     * http://zuodong.natapp1.cc/wx/portal/wx3dc0e786309
      * <p>
      * appid     微信端AppID
      * signature 微信端发来的签名
